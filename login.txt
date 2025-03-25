@@ -1,0 +1,48 @@
+Identifiants de connexion Epic Events CRM
+=====================================
+
+
+Utilisateurs Commercial
+-----------------------
+Username: commercial_1
+Email: commercial_1@epic-events.fr
+Password: password123
+
+Username: commercial_2
+Email: commercial_2@epic-events.fr
+Password: password123
+
+Username: commercial_3
+Email: commercial_3@epic-events.fr
+Password: password123
+
+
+Utilisateurs Support
+--------------------
+Username: support_1
+Email: support_1@epic-events.fr
+Password: password123
+
+Username: support_2
+Email: support_2@epic-events.fr
+Password: password123
+
+Username: support_3
+Email: support_3@epic-events.fr
+Password: password123
+
+
+Utilisateurs Gestion
+--------------------
+Username: gestion_1
+Email: gestion_1@epic-events.fr
+Password: password123
+
+Username: gestion_2
+Email: gestion_2@epic-events.fr
+Password: password123
+
+Username: gestion_3
+Email: gestion_3@epic-events.fr
+Password: password123
+
