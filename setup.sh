@@ -87,11 +87,33 @@ cleanup() {
         print_success "Environnement virtuel désactivé"
     fi
 
-    # Supprimer les fichiers et dossiers
-    rm -rf venv epic_events.db __pycache__ epic_events/__pycache__ epic_events/*/__pycache__ .env
+    # Demander confirmation pour supprimer .env
+    if [ -f ".env" ]; then
+        read -p "Voulez-vous également supprimer le fichier .env contenant la configuration Sentry? (o/N) : " remove_env
+        if [[ $remove_env =~ ^[Oo]$ ]]; then
+            rm -f .env
+            print_success "Fichier .env supprimé"
+        else
+            print_success "Fichier .env conservé"
+        fi
+    fi
+
+    # Supprimer les fichiers et dossiers (sauf .env)
+    rm -rf venv epic_events.db __pycache__ epic_events/__pycache__ epic_events/*/__pycache__
     print_success "Fichiers supprimés"
 
     print_step "Nettoyage terminé"
+}
+
+# Fonction pour nettoyer uniquement les fichiers de cache
+cleanup_cache() {
+    print_step "Nettoyage des fichiers de cache"
+
+    # Supprimer uniquement les fichiers de cache Python
+    rm -rf __pycache__ epic_events/__pycache__ epic_events/*/__pycache__ *.pyc epic_events/*.pyc epic_events/*/*.pyc
+    print_success "Fichiers de cache supprimés"
+
+    print_step "Nettoyage des caches terminé"
 }
 
 # Fonction pour formater le code
@@ -189,13 +211,14 @@ generate_html_report() {
 echo -e "${BLUE}Epic Events - Script de configuration${NC}"
 echo -e "\nQue souhaitez-vous faire ?"
 echo -e "1) Installer l'application"
-echo -e "2) Nettoyer l'installation"
+echo -e "2) Nettoyer l'installation complète"
 echo -e "3) Formater le code (black + flake8)"
 echo -e "4) Configurer Sentry"
 echo -e "5) Générer un rapport HTML avec flake8"
-echo -e "6) Quitter"
+echo -e "6) Nettoyer uniquement les fichiers de cache"
+echo -e "7) Quitter"
 
-read -p "Votre choix (1-6) : " choice
+read -p "Votre choix (1-7) : " choice
 
 case $choice in
     1)
@@ -220,6 +243,9 @@ case $choice in
         generate_html_report
         ;;
     6)
+        cleanup_cache
+        ;;
+    7)
         echo -e "\nAu revoir !"
         exit 0
         ;;

@@ -108,6 +108,12 @@ Ce script va :
 3. Tester les fonctionnalités de base (utilisateurs, clients, contrats, événements)
 4. Générer un rapport des tests
 
+Par défaut, Sentry est désactivé pendant les tests. Si vous souhaitez vérifier l'intégration avec Sentry, exécutez :
+
+```bash
+./test_epic_events.sh --enable-sentry
+```
+
 ## Configuration de Sentry
 
 Pour la journalisation avec Sentry :
@@ -118,6 +124,14 @@ Pour la journalisation avec Sentry :
 
 Vous pouvez également utiliser l'option "4) Configurer Sentry" du script `setup.sh`.
 
+Pour vérifier que Sentry fonctionne correctement, lancez une commande qui effectue une action journalisée, par exemple:
+
+```bash
+python -m epic_events.cli user create --username "test_user" --email "test@example.com" --password "password123" --first-name "Test" --last-name "User" --role "commercial"
+```
+
+Vous devriez voir les événements correspondants dans votre dashboard Sentry.
+
 ## Maintenance
 
 Pour nettoyer l'installation ou formater le code :
@@ -127,9 +141,10 @@ Pour nettoyer l'installation ou formater le code :
 ```
 
 Et sélectionnez l'option appropriée :
-- "2) Nettoyer l'installation" : Supprime l'environnement virtuel, la base de données et les fichiers cache
+- "2) Nettoyer l'installation complète" : Supprime l'environnement virtuel, la base de données et les fichiers cache (avec option de conserver le fichier .env)
 - "3) Formater le code" : Utilise Black et Flake8 pour formater et vérifier le code source
 - "5) Générer un rapport HTML avec flake8" : Crée un rapport HTML détaillé des problèmes de style de code
+- "6) Nettoyer uniquement les fichiers de cache" : Supprime les fichiers .pyc et __pycache__ sans toucher à la configuration
 
 ### Rapport de qualité de code
 

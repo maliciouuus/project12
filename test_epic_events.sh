@@ -11,9 +11,33 @@ TOTAL_TESTS=0
 PASSED_TESTS=0
 FAILED_TESTS=0
 
-# Désactiver l'affichage des logs Sentry pour les tests
-export SENTRY_DSN=""
-export PYTHONWARNINGS="ignore"
+# Paramètres par défaut
+ENABLE_SENTRY=false
+
+# Traitement des arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --enable-sentry)
+      ENABLE_SENTRY=true
+      shift
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
+
+# Configuration de Sentry selon le paramètre
+if [ "$ENABLE_SENTRY" = true ]; then
+    echo -e "${BLUE}Sentry est activé pour les tests${NC}"
+    # Ne pas modifier SENTRY_DSN pour utiliser celui défini dans .env
+    export PYTHONWARNINGS="ignore"
+else
+    echo -e "${BLUE}Sentry est désactivé pour les tests${NC}"
+    # Désactiver l'affichage des logs Sentry pour les tests
+    export SENTRY_DSN=""
+    export PYTHONWARNINGS="ignore"
+fi
 
 # Fonctions utilitaires
 print_header() {
