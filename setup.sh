@@ -98,22 +98,11 @@ cleanup() {
         fi
     fi
 
-    # Supprimer les fichiers et dossiers (sauf .env)
-    rm -rf venv epic_events.db __pycache__ epic_events/__pycache__ epic_events/*/__pycache__
-    print_success "Fichiers supprimés"
+    # Supprimer les fichiers et dossiers (sauf .env si conservé)
+    rm -rf venv epic_events.db __pycache__ epic_events/__pycache__ epic_events/*/__pycache__ *.pyc epic_events/*.pyc epic_events/*/*.pyc
+    print_success "Fichiers et caches supprimés"
 
     print_step "Nettoyage terminé"
-}
-
-# Fonction pour nettoyer uniquement les fichiers de cache
-cleanup_cache() {
-    print_step "Nettoyage des fichiers de cache"
-
-    # Supprimer uniquement les fichiers de cache Python
-    rm -rf __pycache__ epic_events/__pycache__ epic_events/*/__pycache__ *.pyc epic_events/*.pyc epic_events/*/*.pyc
-    print_success "Fichiers de cache supprimés"
-
-    print_step "Nettoyage des caches terminé"
 }
 
 # Fonction pour formater le code
@@ -211,21 +200,19 @@ generate_html_report() {
 echo -e "${BLUE}Epic Events - Script de configuration${NC}"
 echo -e "\nQue souhaitez-vous faire ?"
 echo -e "1) Installer l'application"
-echo -e "2) Nettoyer l'installation complète"
+echo -e "2) Nettoyer l'installation"
 echo -e "3) Formater le code (black + flake8)"
-echo -e "4) Configurer Sentry"
-echo -e "5) Générer un rapport HTML avec flake8"
-echo -e "6) Nettoyer uniquement les fichiers de cache"
-echo -e "7) Quitter"
+echo -e "4) Générer un rapport HTML avec flake8"
+echo -e "5) Quitter"
 
-read -p "Votre choix (1-7) : " choice
+read -p "Votre choix (1-5) : " choice
 
 case $choice in
     1)
         install
         ;;
     2)
-        echo -e "\n${RED}Attention : Cette action va supprimer tous les fichiers générés !${NC}"
+        echo -e "\n${RED}Attention : Cette action va supprimer tous les fichiers générés et les caches !${NC}"
         read -p "Êtes-vous sûr de vouloir continuer ? (o/N) : " confirm
         if [[ $confirm =~ ^[Oo]$ ]]; then
             cleanup
@@ -237,15 +224,9 @@ case $choice in
         format_code
         ;;
     4)
-        configure_sentry
-        ;;
-    5)
         generate_html_report
         ;;
-    6)
-        cleanup_cache
-        ;;
-    7)
+    5)
         echo -e "\nAu revoir !"
         exit 0
         ;;

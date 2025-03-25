@@ -108,11 +108,13 @@ Ce script va :
 3. Tester les fonctionnalités de base (utilisateurs, clients, contrats, événements)
 4. Générer un rapport des tests
 
-Par défaut, Sentry est désactivé pendant les tests. Si vous souhaitez vérifier l'intégration avec Sentry, exécutez :
+Par défaut, Sentry est désactivé pendant les tests. Pour activer Sentry et vérifier son intégration, utilisez:
 
 ```bash
 ./test_epic_events.sh --enable-sentry
 ```
+
+Cette commande va exécuter les mêmes tests mais enregistrera les événements dans votre tableau de bord Sentry.
 
 ## Configuration de Sentry
 
@@ -122,7 +124,7 @@ Pour la journalisation avec Sentry :
 2. Modifiez la variable `SENTRY_DSN` avec votre DSN Sentry
 3. Configurez `SENTRY_SEND_PII` selon vos besoins de confidentialité
 
-Vous pouvez également utiliser l'option "4) Configurer Sentry" du script `setup.sh`.
+La configuration de Sentry s'effectue automatiquement lors de l'installation de l'application.
 
 Pour vérifier que Sentry fonctionne correctement, lancez une commande qui effectue une action journalisée, par exemple:
 
@@ -134,17 +136,17 @@ Vous devriez voir les événements correspondants dans votre dashboard Sentry.
 
 ## Maintenance
 
-Pour nettoyer l'installation ou formater le code :
+Pour gérer l'installation, nettoyer ou formater le code :
 
 ```bash
 ./setup.sh
 ```
 
 Et sélectionnez l'option appropriée :
-- "2) Nettoyer l'installation complète" : Supprime l'environnement virtuel, la base de données et les fichiers cache (avec option de conserver le fichier .env)
+- "1) Installer l'application" : Installe l'environnement, les dépendances et configure Sentry
+- "2) Nettoyer l'installation" : Supprime l'environnement virtuel, la base de données, les fichiers cache et les fichiers .pyc (avec option de conserver le fichier .env)
 - "3) Formater le code" : Utilise Black et Flake8 pour formater et vérifier le code source
-- "5) Générer un rapport HTML avec flake8" : Crée un rapport HTML détaillé des problèmes de style de code
-- "6) Nettoyer uniquement les fichiers de cache" : Supprime les fichiers .pyc et __pycache__ sans toucher à la configuration
+- "4) Générer un rapport HTML avec flake8" : Crée un rapport HTML détaillé des problèmes de style de code
 
 ### Rapport de qualité de code
 

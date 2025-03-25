@@ -14,12 +14,28 @@ FAILED_TESTS=0
 # Paramètres par défaut
 ENABLE_SENTRY=false
 
+# Fonction d'aide
+show_help() {
+    echo -e "${BLUE}Script de test pour Epic Events CRM${NC}"
+    echo -e "\nUtilisation: $0 [options]"
+    echo -e "\nOptions:"
+    echo -e "  --enable-sentry    Active Sentry pour journaliser les événements pendant les tests"
+    echo -e "  --help, -h         Affiche cette aide"
+    echo -e "\nExemples:"
+    echo -e "  $0                 Exécute les tests avec Sentry désactivé"
+    echo -e "  $0 --enable-sentry Exécute les tests avec Sentry activé"
+    exit 0
+}
+
 # Traitement des arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
     --enable-sentry)
       ENABLE_SENTRY=true
       shift
+      ;;
+    --help|-h)
+      show_help
       ;;
     *)
       shift
