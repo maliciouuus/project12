@@ -34,9 +34,12 @@ Et sélectionnez l'option "1) Installer l'application".
 Ce script va :
 1. Créer un environnement virtuel Python
 2. Installer les dépendances requises
-3. Configurer Sentry (optionnel)
-4. Initialiser la base de données
-5. Créer un utilisateur administrateur par défaut
+3. Initialiser la base de données
+4. Créer un utilisateur administrateur par défaut
+
+Pour configurer Sentry, vous devez manuellement configurer le fichier `.env` :
+1. Si le fichier n'existe pas, copiez `.env.example` en `.env`
+2. Modifiez la variable `SENTRY_DSN` avec votre DSN Sentry
 
 ## Utilisation
 
@@ -108,23 +111,31 @@ Ce script va :
 3. Tester les fonctionnalités de base (utilisateurs, clients, contrats, événements)
 4. Générer un rapport des tests
 
-Par défaut, Sentry est désactivé pendant les tests. Pour activer Sentry et vérifier son intégration, utilisez:
+Par défaut, Sentry est activé pendant les tests mais ses messages ne sont pas affichés dans le terminal. Vous pouvez modifier ce comportement avec les options suivantes :
 
 ```bash
-./test_epic_events.sh --enable-sentry
+# Pour désactiver complètement Sentry pendant les tests
+./test_epic_events.sh --disable-sentry
+
+# Pour afficher les messages Sentry dans le terminal
+./test_epic_events.sh --show-sentry
+
+# Pour afficher l'aide et les options disponibles
+./test_epic_events.sh --help
 ```
 
-Cette commande va exécuter les mêmes tests mais enregistrera les événements dans votre tableau de bord Sentry.
+Les événements sont automatiquement enregistrés dans votre tableau de bord Sentry lorsque Sentry est activé.
 
 ## Configuration de Sentry
 
 Pour la journalisation avec Sentry :
 
-1. Copiez le fichier `.env.example` vers `.env`
-2. Modifiez la variable `SENTRY_DSN` avec votre DSN Sentry
+1. Copiez le fichier `.env.example` vers `.env` s'il n'existe pas déjà
+   ```bash
+   cp .env.example .env
+   ```
+2. Modifiez la variable `SENTRY_DSN` dans le fichier `.env` avec votre DSN Sentry
 3. Configurez `SENTRY_SEND_PII` selon vos besoins de confidentialité
-
-La configuration de Sentry s'effectue automatiquement lors de l'installation de l'application.
 
 Pour vérifier que Sentry fonctionne correctement, lancez une commande qui effectue une action journalisée, par exemple:
 
@@ -136,17 +147,16 @@ Vous devriez voir les événements correspondants dans votre dashboard Sentry.
 
 ## Maintenance
 
-Pour gérer l'installation, nettoyer ou formater le code :
+Pour gérer l'installation ou nettoyer l'environnement :
 
 ```bash
 ./setup.sh
 ```
 
 Et sélectionnez l'option appropriée :
-- "1) Installer l'application" : Installe l'environnement, les dépendances et configure Sentry
+- "1) Installer l'application" : Installe l'environnement, les dépendances et initialise la base de données
 - "2) Nettoyer l'installation" : Supprime l'environnement virtuel, la base de données, les fichiers cache et les fichiers .pyc (avec option de conserver le fichier .env)
-- "3) Formater le code" : Utilise Black et Flake8 pour formater et vérifier le code source
-- "4) Générer un rapport HTML avec flake8" : Crée un rapport HTML détaillé des problèmes de style de code
+- "3) Générer un rapport HTML avec flake8" : Crée un rapport HTML détaillé des problèmes de style de code
 
 ### Rapport de qualité de code
 
@@ -160,7 +170,7 @@ Pour générer un rapport HTML détaillé :
 ```bash
 ./setup.sh
 ```
-Puis sélectionnez l'option "5) Générer un rapport HTML avec flake8". Le rapport sera disponible dans le dossier `reports/html/` et peut être consulté dans n'importe quel navigateur web.
+Puis sélectionnez l'option "3) Générer un rapport HTML avec flake8". Le rapport sera disponible dans le dossier `reports/html/` et peut être consulté dans n'importe quel navigateur web.
 
 ## Auteur
 

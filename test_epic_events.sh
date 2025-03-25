@@ -12,26 +12,33 @@ PASSED_TESTS=0
 FAILED_TESTS=0
 
 # Paramètres par défaut
-ENABLE_SENTRY=false
+ENABLE_SENTRY=true
+DISABLE_SENTRY_OUTPUT=true
 
 # Fonction d'aide
 show_help() {
     echo -e "${BLUE}Script de test pour Epic Events CRM${NC}"
     echo -e "\nUtilisation: $0 [options]"
     echo -e "\nOptions:"
-    echo -e "  --enable-sentry    Active Sentry pour journaliser les événements pendant les tests"
-    echo -e "  --help, -h         Affiche cette aide"
+    echo -e "  --disable-sentry    Désactive complètement Sentry pendant les tests"
+    echo -e "  --show-sentry       Affiche les messages Sentry dans le terminal"
+    echo -e "  --help, -h          Affiche cette aide"
     echo -e "\nExemples:"
-    echo -e "  $0                 Exécute les tests avec Sentry désactivé"
-    echo -e "  $0 --enable-sentry Exécute les tests avec Sentry activé"
+    echo -e "  $0                  Exécute les tests avec Sentry activé (logs supprimés)"
+    echo -e "  $0 --disable-sentry Exécute les tests avec Sentry désactivé"
+    echo -e "  $0 --show-sentry    Exécute les tests avec Sentry activé et affiche les logs"
     exit 0
 }
 
 # Traitement des arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --enable-sentry)
-      ENABLE_SENTRY=true
+    --disable-sentry)
+      ENABLE_SENTRY=false
+      shift
+      ;;
+    --show-sentry)
+      DISABLE_SENTRY_OUTPUT=false
       shift
       ;;
     --help|-h)
@@ -95,8 +102,14 @@ setup() {
     }
     print_success "Environnement virtuel activé"
 
+    # Préparer la redirection de sortie pour Sentry
+    OUTPUT_REDIRECT=""
+    if [ "$DISABLE_SENTRY_OUTPUT" = true ]; then
+        OUTPUT_REDIRECT="> /dev/null 2>&1"
+    fi
+
     # Initialiser la base de données
-    python3 -m epic_events.cli init > /dev/null 2>&1 || {
+    eval "python3 -m epic_events.cli init $OUTPUT_REDIRECT" || {
         print_error "Échec de l'initialisation de la base de données"
         exit 1
     }
@@ -107,15 +120,21 @@ setup() {
 test_users() {
     print_header "Test de la gestion des utilisateurs"
     
+    # Préparer la redirection de sortie pour Sentry
+    OUTPUT_REDIRECT=""
+    if [ "$DISABLE_SENTRY_OUTPUT" = true ]; then
+        OUTPUT_REDIRECT="> /dev/null 2>&1"
+    fi
+    
     # Créer un commercial
     USERNAME="commercial_$(generate_unique_id)"
-    python3 -m epic_events.cli user create \
-        --username "$USERNAME" \
-        --email "${USERNAME}@test.com" \
-        --password "password123" \
-        --first-name "Test" \
-        --last-name "Commercial" \
-        --role "commercial" > /dev/null 2>&1 && \
+    eval "python3 -m epic_events.cli user create \
+        --username \"$USERNAME\" \
+        --email \"${USERNAME}@test.com\" \
+        --password \"password123\" \
+        --first-name \"Test\" \
+        --last-name \"Commercial\" \
+        --role \"commercial\" $OUTPUT_REDIRECT" && \
         print_success "Création d'un commercial" || \
         print_error "Échec de la création du commercial"
 
@@ -129,15 +148,21 @@ test_users() {
 test_clients() {
     print_header "Test de la gestion des clients"
     
+    # Préparer la redirection de sortie pour Sentry
+    OUTPUT_REDIRECT=""
+    if [ "$DISABLE_SENTRY_OUTPUT" = true ]; then
+        OUTPUT_REDIRECT="> /dev/null 2>&1"
+    fi
+    
     # Créer un client
     EMAIL="client_$(generate_unique_id)@test.com"
-    python3 -m epic_events.cli client create \
-        --first-name "Test" \
-        --last-name "Client" \
-        --email "$EMAIL" \
-        --phone "+33123456789" \
-        --company "Test Company" \
-        --commercial-id 2 > /dev/null 2>&1 && \
+    eval "python3 -m epic_events.cli client create \
+        --first-name \"Test\" \
+        --last-name \"Client\" \
+        --email \"$EMAIL\" \
+        --phone \"+33123456789\" \
+        --company \"Test Company\" \
+        --commercial-id 2 $OUTPUT_REDIRECT" && \
         print_success "Création d'un client" || \
         print_error "Échec de la création du client"
 
@@ -151,13 +176,19 @@ test_clients() {
 test_contracts() {
     print_header "Test de la gestion des contrats"
     
+    # Préparer la redirection de sortie pour Sentry
+    OUTPUT_REDIRECT=""
+    if [ "$DISABLE_SENTRY_OUTPUT" = true ]; then
+        OUTPUT_REDIRECT="> /dev/null 2>&1"
+    fi
+    
     # Créer un contrat
     CONTRACT_NAME="Contrat_$(generate_unique_id)"
-    python3 -m epic_events.cli contract create \
-        --name "$CONTRACT_NAME" \
+    eval "python3 -m epic_events.cli contract create \
+        --name \"$CONTRACT_NAME\" \
         --client-id 1 \
         --total-amount 5000 \
-        --is-signed > /dev/null 2>&1 && \
+        --is-signed $OUTPUT_REDIRECT" && \
         print_success "Création d'un contrat" || \
         print_error "Échec de la création du contrat"
 
@@ -171,18 +202,24 @@ test_contracts() {
 test_events() {
     print_header "Test de la gestion des événements"
     
+    # Préparer la redirection de sortie pour Sentry
+    OUTPUT_REDIRECT=""
+    if [ "$DISABLE_SENTRY_OUTPUT" = true ]; then
+        OUTPUT_REDIRECT="> /dev/null 2>&1"
+    fi
+    
     # Créer un événement
     EVENT_NAME="Event_$(generate_unique_id)"
     START_DATE=$(date -d "+1 day" "+%Y-%m-%d 09:00")
     END_DATE=$(date -d "+1 day" "+%Y-%m-%d 17:00")
     
-    python3 -m epic_events.cli event create \
-        --name "$EVENT_NAME" \
+    eval "python3 -m epic_events.cli event create \
+        --name \"$EVENT_NAME\" \
         --contract-id 1 \
-        --start-date "$START_DATE" \
-        --end-date "$END_DATE" \
-        --location "Test Location" \
-        --attendees 50 > /dev/null 2>&1 && \
+        --start-date \"$START_DATE\" \
+        --end-date \"$END_DATE\" \
+        --location \"Test Location\" \
+        --attendees 50 $OUTPUT_REDIRECT" && \
         print_success "Création d'un événement" || \
         print_error "Échec de la création de l'événement"
 
@@ -192,27 +229,40 @@ test_events() {
         print_error "Événement non trouvé dans la liste"
 }
 
-# Fonction pour afficher le rapport final
-show_report() {
-    print_header "Rapport des tests"
-    echo -e "Tests totaux : $TOTAL_TESTS"
-    echo -e "Tests réussis : ${GREEN}$PASSED_TESTS${NC}"
-    echo -e "Tests échoués : ${RED}$FAILED_TESTS${NC}"
-    
-    if [ $FAILED_TESTS -eq 0 ]; then
-        echo -e "\n${GREEN}Tous les tests ont réussi !${NC}"
-        exit 0
-    else
-        echo -e "\n${RED}Certains tests ont échoué.${NC}"
-        exit 1
-    fi
-}
+# Exécution des tests
+print_header "Démarrage des tests"
 
-# Exécution principale
+# Nettoyer, configurer et exécuter les tests
 cleanup
 setup
 test_users
 test_clients
 test_contracts
 test_events
-show_report
+
+# Afficher le rapport
+print_header "Rapport des tests"
+echo -e "Tests totaux: ${TOTAL_TESTS}"
+echo -e "${GREEN}Tests réussis: ${PASSED_TESTS}${NC}"
+echo -e "${RED}Tests échoués: ${FAILED_TESTS}${NC}"
+
+# Résumé de l'état de Sentry
+if [ "$ENABLE_SENTRY" = true ]; then
+    if [ "$DISABLE_SENTRY_OUTPUT" = true ]; then
+        echo -e "\n${BLUE}Sentry est activé (sortie masquée)${NC}"
+        echo -e "Les événements sont envoyés à Sentry mais les logs ne sont pas affichés dans le terminal"
+    else
+        echo -e "\n${BLUE}Sentry est activé avec affichage des logs${NC}"
+    fi
+else
+    echo -e "\n${BLUE}Sentry est désactivé${NC}"
+fi
+
+# Calcul du statut de sortie
+if [ $FAILED_TESTS -eq 0 ]; then
+    echo -e "\n${GREEN}Tous les tests ont réussi !${NC}"
+    exit 0
+else
+    echo -e "\n${RED}Certains tests ont échoué !${NC}"
+    exit 1
+fi

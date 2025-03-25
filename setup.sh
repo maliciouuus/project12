@@ -25,29 +25,6 @@ print_warning() {
     echo -e "${YELLOW}! $1${NC}"
 }
 
-# Fonction pour configurer Sentry
-configure_sentry() {
-    print_step "Configuration de Sentry"
-
-    if [ ! -f ".env" ]; then
-        cp .env.example .env || print_error "Impossible de créer le fichier .env"
-        print_success "Fichier .env créé"
-        
-        echo -e "\n${YELLOW}Configuration de Sentry${NC}"
-        read -p "Entrez votre DSN Sentry (laissez vide pour désactiver) : " sentry_dsn
-        
-        if [ ! -z "$sentry_dsn" ]; then
-            sed -i "s|https://your-sentry-dsn@your-sentry-instance.ingest.sentry.io/your-project-id|$sentry_dsn|" .env
-            print_success "DSN Sentry configuré"
-        else
-            sed -i "s|^SENTRY_DSN=.*|SENTRY_DSN=|" .env
-            print_warning "Sentry désactivé"
-        fi
-    else
-        print_warning "Le fichier .env existe déjà"
-    fi
-}
-
 # Fonction pour installer l'application
 install() {
     print_step "Installation de Epic Events"
@@ -62,9 +39,6 @@ install() {
     print_step "Installation des dépendances"
     pip install -r requirements.txt || print_error "Impossible d'installer les dépendances"
     print_success "Dépendances installées"
-
-    # Configurer Sentry
-    configure_sentry
 
     # Initialiser la base de données
     print_step "Initialisation de la base de données"
@@ -103,49 +77,6 @@ cleanup() {
     print_success "Fichiers et caches supprimés"
 
     print_step "Nettoyage terminé"
-}
-
-# Fonction pour formater le code
-format_code() {
-    print_step "Formatage du code"
-
-    # Vérifier si l'environnement virtuel est activé
-    if [ -z "$VIRTUAL_ENV" ]; then
-        if [ -d "venv" ]; then
-            source venv/bin/activate || print_error "Impossible d'activer l'environnement virtuel"
-        else
-            print_error "L'environnement virtuel n'existe pas. Veuillez d'abord installer l'application."
-        fi
-    fi
-
-    # Formater avec black
-    print_step "Formatage avec black"
-    black epic_events/ --line-length 100 || print_warning "Problèmes lors du formatage avec black"
-    print_success "Code formaté avec black"
-
-    # Vérifier avec flake8
-    print_step "Vérification avec flake8"
-    mkdir -p reports
-    flake8 epic_events/ \
-        --max-line-length=100 \
-        --exclude=__pycache__,*.pyc,venv \
-        --statistics \
-        --ignore=E203,W503 \
-        --output-file=reports/flake8_report.txt || true
-
-    # Afficher le rapport flake8
-    if [ -f reports/flake8_report.txt ]; then
-        ERRORS_COUNT=$(wc -l < reports/flake8_report.txt)
-        if [ "$ERRORS_COUNT" -eq 0 ]; then
-            print_success "Aucun problème de style détecté"
-        else
-            print_warning "Nombre de problèmes détectés : $ERRORS_COUNT"
-            echo -e "\nProblèmes détectés :"
-            cat reports/flake8_report.txt
-        fi
-    fi
-
-    print_step "Formatage terminé"
 }
 
 # Fonction pour générer un rapport HTML avec flake8
@@ -201,11 +132,10 @@ echo -e "${BLUE}Epic Events - Script de configuration${NC}"
 echo -e "\nQue souhaitez-vous faire ?"
 echo -e "1) Installer l'application"
 echo -e "2) Nettoyer l'installation"
-echo -e "3) Formater le code (black + flake8)"
-echo -e "4) Générer un rapport HTML avec flake8"
-echo -e "5) Quitter"
+echo -e "3) Générer un rapport HTML avec flake8"
+echo -e "4) Quitter"
 
-read -p "Votre choix (1-5) : " choice
+read -p "Votre choix (1-4) : " choice
 
 case $choice in
     1)
@@ -221,12 +151,9 @@ case $choice in
         fi
         ;;
     3)
-        format_code
-        ;;
-    4)
         generate_html_report
         ;;
-    5)
+    4)
         echo -e "\nAu revoir !"
         exit 0
         ;;
