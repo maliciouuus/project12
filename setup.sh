@@ -137,6 +137,54 @@ format_code() {
     print_step "Formatage terminé"
 }
 
+# Fonction pour générer un rapport HTML avec flake8
+generate_html_report() {
+    print_step "Génération du rapport HTML avec flake8"
+
+    # Vérifier si l'environnement virtuel est activé
+    if [ -z "$VIRTUAL_ENV" ]; then
+        if [ -d "venv" ]; then
+            source venv/bin/activate || print_error "Impossible d'activer l'environnement virtuel"
+        else
+            print_error "L'environnement virtuel n'existe pas. Veuillez d'abord installer l'application."
+        fi
+    fi
+
+    # Créer le répertoire pour les rapports s'il n'existe pas
+    mkdir -p reports/html
+
+    # Exécuter flake8 avec le format HTML
+    print_step "Exécution de flake8-html"
+    flake8 epic_events/ \
+        --max-line-length=100 \
+        --exclude="__pycache__,*.pyc,venv" \
+        --statistics \
+        --ignore=E203,W503 \
+        --format=html \
+        --htmldir=reports/html || print_warning "Erreurs lors de la génération du rapport"
+
+    print_success "Rapport HTML généré dans le dossier: reports/html"
+    
+    # Afficher l'URL pour ouvrir le rapport
+    REPORT_PATH="$(pwd)/reports/html/index.html"
+    print_step "Vous pouvez ouvrir le rapport avec la commande:"
+    echo -e "${GREEN}firefox $REPORT_PATH${NC}"
+    
+    # Demander à l'utilisateur s'il souhaite ouvrir le rapport maintenant
+    read -p "Voulez-vous ouvrir le rapport maintenant? (o/N) : " open_report
+    if [[ $open_report =~ ^[Oo]$ ]]; then
+        if command -v firefox &> /dev/null; then
+            firefox "$REPORT_PATH"
+        elif command -v google-chrome &> /dev/null; then
+            google-chrome "$REPORT_PATH"
+        elif command -v chromium &> /dev/null; then
+            chromium "$REPORT_PATH"
+        else
+            print_warning "Aucun navigateur trouvé. Ouvrez le rapport manuellement."
+        fi
+    fi
+}
+
 # Menu principal
 echo -e "${BLUE}Epic Events - Script de configuration${NC}"
 echo -e "\nQue souhaitez-vous faire ?"
@@ -144,9 +192,10 @@ echo -e "1) Installer l'application"
 echo -e "2) Nettoyer l'installation"
 echo -e "3) Formater le code (black + flake8)"
 echo -e "4) Configurer Sentry"
-echo -e "5) Quitter"
+echo -e "5) Générer un rapport HTML avec flake8"
+echo -e "6) Quitter"
 
-read -p "Votre choix (1-5) : " choice
+read -p "Votre choix (1-6) : " choice
 
 case $choice in
     1)
@@ -168,6 +217,9 @@ case $choice in
         configure_sentry
         ;;
     5)
+        generate_html_report
+        ;;
+    6)
         echo -e "\nAu revoir !"
         exit 0
         ;;

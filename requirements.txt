@@ -8,4 +8,5 @@ Werkzeug==3.0.1  # Pour le hachage des mots de passe
 # Development dependencies
 black==24.1.1  # Formatage du code
 flake8==7.0.0  # Linting
+flake8-html==0.4.3  # Génération de rapports HTML
 Faker==23.2.1  # Génération de données de test 

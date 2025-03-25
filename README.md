@@ -129,6 +129,21 @@ Pour nettoyer l'installation ou formater le code :
 Et sélectionnez l'option appropriée :
 - "2) Nettoyer l'installation" : Supprime l'environnement virtuel, la base de données et les fichiers cache
 - "3) Formater le code" : Utilise Black et Flake8 pour formater et vérifier le code source
+- "5) Générer un rapport HTML avec flake8" : Crée un rapport HTML détaillé des problèmes de style de code
+
+### Rapport de qualité de code
+
+L'application intègre des outils de qualité de code :
+
+1. **Black** : Formateur de code automatique qui assure une mise en forme cohérente
+2. **Flake8** : Linter qui vérifie le respect des conventions PEP 8 et identifie les problèmes potentiels
+3. **Rapport HTML** : Visualisation interactive des problèmes de style de code
+
+Pour générer un rapport HTML détaillé :
+```bash
+./setup.sh
+```
+Puis sélectionnez l'option "5) Générer un rapport HTML avec flake8". Le rapport sera disponible dans le dossier `reports/html/` et peut être consulté dans n'importe quel navigateur web.
 
 ## Auteur
 
