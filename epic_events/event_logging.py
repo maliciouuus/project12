@@ -12,15 +12,28 @@ import sentry_sdk
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 # Charger les variables d'environnement depuis .env
+# Cela permet de configurer Sentry sans exposer les clés d'API dans le code
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass
 
 
 def init_sentry():
-    """Initialise Sentry avec la configuration depuis les variables d'environnement."""
+    """
+    Initialise Sentry avec la configuration depuis les variables d'environnement.
+
+    Cette fonction configure Sentry en utilisant les variables d'environnement
+    suivantes:
+    - SENTRY_DSN: URL de connexion à Sentry
+    - ENVIRONMENT: Environnement (development, staging, production)
+    - SENTRY_SEND_PII: Option pour envoyer les informations personnelles
+
+    Si le DSN n'est pas configuré, Sentry ne sera pas initialisé et aucune
+    donnée ne sera envoyée.
+    """
     dsn = os.getenv("SENTRY_DSN")
     environment = os.getenv("ENVIRONMENT", "development")
     send_pii = os.getenv("SENTRY_SEND_PII", "false").lower() == "true"
@@ -30,14 +43,15 @@ def init_sentry():
             dsn=dsn,
             environment=environment,
             integrations=[
+                # Intégration SQLAlchemy pour capturer les erreurs de base de données
                 SqlalchemyIntegration(),
             ],
-            traces_sample_rate=1.0,
-            send_default_pii=send_pii,
+            traces_sample_rate=1.0,  # Capture 100% des traces pour le monitoring de performance
+            send_default_pii=send_pii,  # Contrôle l'envoi d'informations personnelles
             # Configuration additionnelle pour une meilleure traçabilité
-            attach_stacktrace=True,
-            max_breadcrumbs=50,
-            debug=environment == "development",
+            attach_stacktrace=True,  # Attache la trace d'appel à chaque événement
+            max_breadcrumbs=50,  # Nombre maximum de breadcrumbs à enregistrer
+            debug=environment == "development",  # Mode debug en développement
             # Inclure les variables d'environnement sûres
             include_local_variables=True,
             # Configuration des échantillons de performance
@@ -46,7 +60,7 @@ def init_sentry():
             release=os.getenv("APP_VERSION", "1.0.0"),
         )
 
-        # Ajouter des tags globaux
+        # Ajouter des tags globaux pour faciliter le filtrage dans Sentry
         sentry_sdk.set_tag("app_name", "Epic Events CRM")
         sentry_sdk.set_tag("environment", environment)
 
@@ -60,14 +74,27 @@ def log_user_action(action_type):
     """
     Décorateur pour journaliser les actions sur les utilisateurs.
 
+    Ce décorateur capture les informations sur les actions utilisateurs et
+    les envoie à Sentry avec un contexte enrichi. Il capture également
+    les exceptions qui pourraient survenir pendant l'exécution de la fonction.
+
     Args:
         action_type (str): Type d'action (create_user, update_user, delete_user)
+
+    Returns:
+        function: Décorateur configuré pour le type d'action spécifié
+
+    Exemple:
+        @log_user_action("create_user")
+        def create(username, email, ...):
+            # La fonction sera journalisée avec le type "create_user"
     """
 
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             try:
+                # Exécuter la fonction originale
                 result = func(*args, **kwargs)
 
                 # Journaliser l'action
@@ -82,6 +109,7 @@ def log_user_action(action_type):
                     if "email" in kwargs:
                         scope.set_user({"email": kwargs["email"]})
 
+                    # Capturer un message informatif avec des métadonnées
                     sentry_sdk.capture_message(
                         f"Action utilisateur: {action_type}",
                         level="info",
@@ -100,7 +128,7 @@ def log_user_action(action_type):
                     scope.set_tag("error_type", type(e).__name__)
                     scope.set_extra("parameters", kwargs)
                     sentry_sdk.capture_exception(e)
-                raise
+                raise  # Re-lever l'exception pour le traitement normal
 
         return wrapper
 
@@ -110,11 +138,27 @@ def log_user_action(action_type):
 def log_contract_signature(func):
     """
     Décorateur pour journaliser les signatures de contrats.
+
+    Ce décorateur capture les informations lorsqu'un contrat est signé
+    et les envoie à Sentry. Il est spécifiquement conçu pour être utilisé
+    sur les fonctions qui créent ou mettent à jour des contrats.
+
+    Args:
+        func (function): La fonction à décorer
+
+    Returns:
+        function: La fonction décorée
+
+    Exemple:
+        @log_contract_signature
+        def create(name, client_id, total_amount, is_signed, ...):
+            # La signature du contrat sera journalisée si is_signed est True
     """
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
+            # Exécuter la fonction originale
             result = func(*args, **kwargs)
 
             # Si le contrat est signé, journaliser l'événement
@@ -135,6 +179,7 @@ def log_contract_signature(func):
                         },
                     )
 
+                    # Capturer un message informatif
                     sentry_sdk.capture_message(
                         "Signature de contrat",
                         level="info",
@@ -142,12 +187,13 @@ def log_contract_signature(func):
 
             return result
         except Exception as e:
+            # En cas d'erreur, capturer l'exception avec le contexte
             with sentry_sdk.push_scope() as scope:
                 scope.set_tag("component", "contract_management")
                 scope.set_tag("error_type", type(e).__name__)
                 scope.set_context("contract_data", kwargs)
                 sentry_sdk.capture_exception(e)
-            raise
+            raise  # Re-lever l'exception pour le traitement normal
 
     return wrapper
 
@@ -156,9 +202,18 @@ def log_error(error, context=None):
     """
     Journalise une erreur avec son contexte.
 
+    Cette fonction permet de journaliser des erreurs spécifiques
+    avec un contexte personnalisé, pour faciliter le debug.
+
     Args:
-        error: L'erreur à journaliser
-        context (dict, optional): Contexte supplémentaire
+        error: L'erreur à journaliser (exception ou message)
+        context (dict, optional): Contexte supplémentaire, par défaut None
+
+    Exemple:
+        try:
+            # Code qui peut échouer
+        except Exception as e:
+            log_error(e, {"user_id": 123, "action": "delete"})
     """
     if context is None:
         context = {}
@@ -168,8 +223,10 @@ def log_error(error, context=None):
         scope.set_tag("error_type", type(error).__name__)
         scope.set_tag("component", context.get("component", "unknown"))
 
-        # Ajouter le contexte de l'erreur
-        scope.set_context("error_context", {"timestamp": datetime.utcnow().isoformat(), **context})
+        # Ajouter le contexte de l'erreur avec timestamp
+        scope.set_context(
+            "error_context", {"timestamp": datetime.utcnow().isoformat(), **context}
+        )
 
         # Capturer l'exception
         sentry_sdk.capture_exception(error)

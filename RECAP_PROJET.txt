@@ -1,0 +1,189 @@
+# RÉCAPITULATIF DU PROJET EPIC EVENTS CRM
+
+## PRÉSENTATION GÉNÉRALE
+
+Epic Events CRM est une application en ligne de commande (CLI) permettant la gestion des clients, contrats et événements pour une entreprise d'organisation d'événements. L'application gère différents rôles utilisateurs avec des permissions spécifiques et intègre un système de journalisation avec Sentry.
+
+## STRUCTURE DU PROJET
+
+```
+epic_events/
+├── __init__.py        # Initialisation du package et de Sentry
+├── cli.py             # Point d'entrée de la CLI
+├── database.py        # Configuration de la base de données
+├── event_logging.py   # Intégration avec Sentry
+├── commands/          # Commandes CLI
+│   ├── __init__.py
+│   ├── client_commands.py
+│   ├── contract_commands.py
+│   ├── event_commands.py
+│   ├── seed_commands.py
+│   └── user_commands.py
+└── models/            # Modèles de données
+    ├── __init__.py
+    ├── client.py
+    ├── contract.py
+    ├── event.py
+    └── user.py
+```
+
+## FICHIERS PRINCIPAUX ET LEUR RÔLE
+
+### 1. Module Principal (epic_events/)
+
+#### __init__.py
+- **Rôle** : Initialise l'application et expose les composants principaux
+- **Fonctionnalités** : Configure la base de données, initialise Sentry, crée une session SQLAlchemy scoped
+- **Modules utilisés** : os, atexit, sqlalchemy, .models, .event_logging
+
+#### cli.py
+- **Rôle** : Point d'entrée de l'application CLI
+- **Fonctionnalités** : Définit le groupe de commandes principal, enregistre les sous-commandes, initialise la base de données
+- **Modules utilisés** : os, sys, click, sqlalchemy, epic_events.commands, epic_events.database, epic_events.models
+
+#### database.py
+- **Rôle** : Configuration de la base de données avec SQLAlchemy
+- **Fonctionnalités** : Crée le moteur de base de données, définit la classe de base pour les modèles, gère les sessions
+- **Modules utilisés** : os, sqlalchemy
+
+#### event_logging.py
+- **Rôle** : Gestion de la journalisation des événements avec Sentry
+- **Fonctionnalités** : Configure Sentry, fournit des décorateurs pour journaliser les actions utilisateurs et signatures de contrats
+- **Modules utilisés** : os, functools, datetime, sentry_sdk, dotenv
+
+### 2. Commandes CLI (epic_events/commands/)
+
+#### client_commands.py
+- **Rôle** : Gestion des clients
+- **Fonctionnalités** : Création, modification, suppression et liste des clients
+- **Modules utilisés** : click, sqlalchemy, ..models, ..database
+
+#### contract_commands.py
+- **Rôle** : Gestion des contrats
+- **Fonctionnalités** : Création, modification, suppression et liste des contrats, avec journalisation Sentry
+- **Modules utilisés** : click, ..models, ..database, ..event_logging
+
+#### event_commands.py
+- **Rôle** : Gestion des événements
+- **Fonctionnalités** : Création, modification, assignation de support et liste des événements
+- **Modules utilisés** : click, datetime, sqlalchemy, ..models, ..database
+
+#### seed_commands.py
+- **Rôle** : Génération de données de test
+- **Fonctionnalités** : Crée des utilisateurs, clients, contrats et événements de test
+- **Modules utilisés** : click, random, datetime, faker, sqlalchemy, ..models, ..database
+
+#### user_commands.py
+- **Rôle** : Gestion des utilisateurs
+- **Fonctionnalités** : Création, modification, suppression et liste des utilisateurs, avec journalisation Sentry
+- **Modules utilisés** : click, sqlalchemy, ..models, ..database, ..event_logging
+
+### 3. Modèles de données (epic_events/models/)
+
+#### user.py
+- **Rôle** : Définit le modèle d'utilisateur et les rôles
+- **Fonctionnalités** : Gestion des utilisateurs, permissions, hachage des mots de passe
+- **Modules utilisés** : datetime, sqlalchemy, werkzeug.security, ..database
+
+#### client.py
+- **Rôle** : Définit le modèle de client
+- **Fonctionnalités** : Gestion des clients et relation avec un commercial
+- **Modules utilisés** : datetime, sqlalchemy, ..database
+
+#### contract.py
+- **Rôle** : Définit le modèle de contrat
+- **Fonctionnalités** : Gestion des contrats, relation avec client et commercial
+- **Modules utilisés** : datetime, sqlalchemy, ..database
+
+#### event.py
+- **Rôle** : Définit le modèle d'événement
+- **Fonctionnalités** : Gestion des événements, relation avec contrat, client et support
+- **Modules utilisés** : datetime, sqlalchemy, ..database
+
+### 4. Scripts Shell
+
+#### setup.sh
+- **Rôle** : Script d'installation et de maintenance
+- **Fonctionnalités** : Installation de l'application, nettoyage, génération de rapports HTML
+- **Technologie** : Bash
+
+#### test_epic_events.sh
+- **Rôle** : Script de test automatisé
+- **Fonctionnalités** : Tests des fonctionnalités de base avec options pour Sentry
+- **Technologie** : Bash
+
+## MODULES EXTERNES UTILISÉS
+
+### SQLAlchemy
+- **Usage** : ORM (Object-Relational Mapping) pour interagir avec la base de données
+- **Composants clés** : 
+  - Engine : Connexion à la base de données
+  - Base : Classe de base pour les modèles
+  - Session : Gestion des transactions
+  - Column, relationship : Définition des modèles
+
+### Click
+- **Usage** : Création de l'interface en ligne de commande
+- **Composants clés** : 
+  - @click.group() : Crée un groupe de commandes
+  - @click.command() : Définit une commande
+  - @click.option() : Ajoute des options à une commande
+  - click.echo() : Affiche du texte
+
+### Sentry SDK
+- **Usage** : Journalisation des événements et des erreurs
+- **Composants clés** : 
+  - sentry_sdk.init() : Configuration de Sentry
+  - sentry_sdk.capture_message() : Journalise un message
+  - sentry_sdk.capture_exception() : Journalise une exception
+  - sentry_sdk.push_scope() : Crée un contexte pour la journalisation
+
+### Werkzeug
+- **Usage** : Hachage sécurisé des mots de passe
+- **Composants clés** : 
+  - generate_password_hash() : Hache un mot de passe
+  - check_password_hash() : Vérifie un mot de passe
+
+### Faker
+- **Usage** : Génération de données de test réalistes
+- **Composants clés** : 
+  - Faker() : Crée un générateur de données
+  - fake.first_name(), fake.email(), etc. : Génère des données aléatoires
+
+### Python-dotenv
+- **Usage** : Chargement des variables d'environnement depuis un fichier .env
+- **Composants clés** : 
+  - load_dotenv() : Charge les variables d'environnement
+
+## SPÉCIFICITÉS TECHNIQUES IMPORTANTES
+
+### Gestion des rôles et permissions
+- Quatre rôles définis : ADMIN, COMMERCIAL, SUPPORT, GESTION
+- Système de vérification des permissions basé sur le rôle et les relations
+- Méthodes can_manage_client(), can_manage_event() pour vérifier les droits
+
+### Architecture de la base de données
+- Modèle relationnel avec SQLite (configurable pour d'autres bases)
+- Relations one-to-many et many-to-many correctement définies
+- Cascade de suppression pour maintenir l'intégrité référentielle
+
+### Sécurité
+- Mots de passe stockés sous forme de hachage sécurisé (werkzeug)
+- Variables sensibles (DSN Sentry) stockées dans un fichier .env
+- Option pour contrôler la collecte d'informations personnelles (PII)
+
+### Journalisation avec Sentry
+- Décorateurs personnalisés pour journaliser des actions spécifiques
+- Configuration poussée de Sentry (environnement, tags, contexte)
+- Option pour activer/désactiver Sentry et contrôler l'affichage des logs
+
+### Scripts utilitaires
+- Installation automatisée avec setup.sh
+- Tests automatisés avec test_epic_events.sh
+- Génération de données de test avec les commandes seed
+
+### Fonctionnalités particulières
+- Gestion du cycle de vie des contrats (non signé -> signé -> payé)
+- Assignation automatique du commercial du client au contrat
+- Filtrage avancé des événements (à venir, en cours, passés)
+- Extraction des ID générés pour une utilisation dans des scripts 

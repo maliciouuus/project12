@@ -58,7 +58,9 @@ class Contract(Base):
     # Relations avec les événements
     # cascade="all, delete-orphan" signifie que la suppression d'un contrat
     # entraîne la suppression de tous ses événements
-    events = relationship("Event", back_populates="contract", cascade="all, delete-orphan")
+    events = relationship(
+        "Event", back_populates="contract", cascade="all, delete-orphan"
+    )
 
     def __init__(self, **kwargs):
         """

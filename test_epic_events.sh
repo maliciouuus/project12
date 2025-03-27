@@ -53,7 +53,8 @@ done
 # Configuration de Sentry selon le paramètre
 if [ "$ENABLE_SENTRY" = true ]; then
     echo -e "${BLUE}Sentry est activé pour les tests${NC}"
-    # Ne pas modifier SENTRY_DSN pour utiliser celui défini dans .env
+    # Définir l'environnement en "test" pour désactiver le mode debug
+    export ENVIRONMENT="test"
     export PYTHONWARNINGS="ignore"
 else
     echo -e "${BLUE}Sentry est désactivé pour les tests${NC}"

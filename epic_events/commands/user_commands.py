@@ -66,7 +66,9 @@ def create(username, email, password, first_name, last_name, role):
     except Exception as e:
         session.rollback()
         log_error(e, {"username": username, "email": email, "role": role})
-        raise click.ClickException(f"Erreur lors de la création de l'utilisateur: {str(e)}")
+        raise click.ClickException(
+            f"Erreur lors de la création de l'utilisateur: {str(e)}"
+        )
     finally:
         session.close()
 
@@ -111,7 +113,9 @@ def update(user_id, username, email, password, first_name, last_name, role):
     except Exception as e:
         session.rollback()
         log_error(e, {"user_id": user_id})
-        raise click.ClickException(f"Erreur lors de la mise à jour de l'utilisateur: {str(e)}")
+        raise click.ClickException(
+            f"Erreur lors de la mise à jour de l'utilisateur: {str(e)}"
+        )
     finally:
         session.close()
 
@@ -134,7 +138,9 @@ def delete(user_id):
     except Exception as e:
         session.rollback()
         log_error(e, {"user_id": user_id})
-        raise click.ClickException(f"Erreur lors de la suppression de l'utilisateur: {str(e)}")
+        raise click.ClickException(
+            f"Erreur lors de la suppression de l'utilisateur: {str(e)}"
+        )
     finally:
         session.close()
 

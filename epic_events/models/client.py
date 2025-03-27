@@ -52,8 +52,12 @@ class Client(Base):
     # Relations avec les contrats et événements
     # cascade="all, delete-orphan" signifie que la suppression d'un client
     # entraîne la suppression de tous ses contrats et événements
-    contracts = relationship("Contract", back_populates="client", cascade="all, delete-orphan")
-    events = relationship("Event", back_populates="client", cascade="all, delete-orphan")
+    contracts = relationship(
+        "Contract", back_populates="client", cascade="all, delete-orphan"
+    )
+    events = relationship(
+        "Event", back_populates="client", cascade="all, delete-orphan"
+    )
 
     @classmethod
     def get_clients_for_commercial(cls, session, commercial_id):

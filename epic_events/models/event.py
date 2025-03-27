@@ -101,7 +101,11 @@ class Event(Base):
         Returns:
             Query: Requête SQLAlchemy des événements filtrés
         """
-        return session.query(cls).join(Contract).filter(Contract.commercial_id == commercial_id)
+        return (
+            session.query(cls)
+            .join(Contract)
+            .filter(Contract.commercial_id == commercial_id)
+        )
 
     def can_be_edited_by(self, user):
         """
@@ -123,7 +127,10 @@ class Event(Base):
         return (
             user.has_role(UserRole.GESTION)
             or (user.has_role(UserRole.SUPPORT) and self.support_id == user.id)
-            or (user.has_role(UserRole.COMMERCIAL) and self.contract.commercial_id == user.id)
+            or (
+                user.has_role(UserRole.COMMERCIAL)
+                and self.contract.commercial_id == user.id
+            )
         )
 
     def __init__(self, **kwargs):
