@@ -25,6 +25,18 @@ print_warning() {
     echo -e "${YELLOW}! $1${NC}"
 }
 
+# Vérifie si l'environnement virtuel est activé, sinon l'active
+ensure_venv_activated() {
+    if [ -z "$VIRTUAL_ENV" ]; then
+        if [ -d "venv" ]; then
+            source venv/bin/activate || print_error "Impossible d'activer l'environnement virtuel"
+            print_success "Environnement virtuel activé"
+        else
+            print_error "L'environnement virtuel n'existe pas. Veuillez d'abord installer l'application (option 1)."
+        fi
+    fi
+}
+
 # Fonction pour installer l'application
 install() {
     print_step "Installation de Epic Events"
@@ -84,13 +96,7 @@ generate_html_report() {
     print_step "Génération du rapport HTML avec flake8"
 
     # Vérifier si l'environnement virtuel est activé
-    if [ -z "$VIRTUAL_ENV" ]; then
-        if [ -d "venv" ]; then
-            source venv/bin/activate || print_error "Impossible d'activer l'environnement virtuel"
-        else
-            print_error "L'environnement virtuel n'existe pas. Veuillez d'abord installer l'application."
-        fi
-    fi
+    ensure_venv_activated
 
     # Créer le répertoire pour les rapports s'il n'existe pas
     mkdir -p reports/html
@@ -127,38 +133,70 @@ generate_html_report() {
     fi
 }
 
+# Fonction pour lancer le menu interactif
+run_menu() {
+    print_step "Lancement du menu interactif Epic Events"
+    
+    # Vérifier si l'environnement virtuel est activé
+    ensure_venv_activated
+    
+    print_step "Démarrage du menu..."
+    python -m epic_events.cli menu
+    
+    print_success "Session du menu terminée"
+}
+
 # Menu principal
-echo -e "${BLUE}Epic Events - Script de configuration${NC}"
-echo -e "\nQue souhaitez-vous faire ?"
-echo -e "1) Installer l'application"
-echo -e "2) Nettoyer l'installation"
-echo -e "3) Générer un rapport HTML avec flake8"
-echo -e "4) Quitter"
+show_menu() {
+    echo -e "${BLUE}Epic Events - Script de configuration${NC}"
+    echo -e "\nQue souhaitez-vous faire ?"
+    echo -e "1) Installer l'application"
+    echo -e "2) Lancer le menu interactif"
+    echo -e "3) Générer un rapport HTML avec flake8"
+    echo -e "4) Nettoyer l'installation"
+    echo -e "5) Quitter"
 
-read -p "Votre choix (1-4) : " choice
+    read -p "Votre choix (1-5) : " choice
 
-case $choice in
-    1)
-        install
-        ;;
-    2)
-        echo -e "\n${RED}Attention : Cette action va supprimer tous les fichiers générés et les caches !${NC}"
-        read -p "Êtes-vous sûr de vouloir continuer ? (o/N) : " confirm
-        if [[ $confirm =~ ^[Oo]$ ]]; then
-            cleanup
-        else
-            echo -e "\nOpération annulée."
-        fi
-        ;;
-    3)
-        generate_html_report
-        ;;
-    4)
+    case $choice in
+        1)
+            install
+            ;;
+        2)
+            run_menu
+            ;;
+        3)
+            generate_html_report
+            ;;
+        4)
+            echo -e "\n${RED}Attention : Cette action va supprimer tous les fichiers générés et les caches !${NC}"
+            read -p "Êtes-vous sûr de vouloir continuer ? (o/N) : " confirm
+            if [[ $confirm =~ ^[Oo]$ ]]; then
+                cleanup
+            else
+                echo -e "\nOpération annulée."
+            fi
+            ;;
+        5)
+            echo -e "\nAu revoir !"
+            exit 0
+            ;;
+        *)
+            echo -e "\n${RED}Choix invalide${NC}"
+            return 1
+            ;;
+    esac
+    
+    # Demander à l'utilisateur s'il souhaite revenir au menu principal
+    read -p "Voulez-vous revenir au menu principal? (O/n) : " return_menu
+    if [[ $return_menu =~ ^[Nn]$ ]]; then
         echo -e "\nAu revoir !"
         exit 0
-        ;;
-    *)
-        echo -e "\n${RED}Choix invalide${NC}"
-        exit 1
-        ;;
-esac 
+    else
+        clear  # Nettoyer l'écran avant d'afficher à nouveau le menu
+        show_menu  # Afficher à nouveau le menu
+    fi
+}
+
+# Démarrer le script avec le menu principal
+show_menu 

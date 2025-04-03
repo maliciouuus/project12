@@ -8,7 +8,7 @@ et fournit des utilitaires pour manipuler les sessions SQLAlchemy.
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 # Récupérer l'URL de la base de données depuis les variables d'environnement
 # ou utiliser SQLite par défaut

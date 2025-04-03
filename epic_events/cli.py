@@ -9,6 +9,7 @@ Il sert également de point de démarrage pour initialiser la base de données.
 import os
 import sys
 import click
+import subprocess
 from sqlalchemy.orm import Session
 
 # Ajouter le répertoire parent au PYTHONPATH
@@ -29,6 +30,7 @@ from epic_events.commands import (  # noqa: E402
 )
 from epic_events.database import Base, engine  # noqa: E402
 from epic_events.models import User, UserRole  # noqa: E402
+from epic_events.menu import start_menu  # noqa: E402
 
 
 @click.group()
@@ -72,6 +74,66 @@ def init():
         session.commit()
         click.echo("Utilisateur administrateur créé.")
     session.close()
+
+
+# Commande pour lancer le menu interactif
+@cli.command()
+def menu():
+    """
+    Lancer l'interface utilisateur interactive.
+
+    Cette commande démarre un menu interactif dans le terminal qui permet
+    de naviguer facilement entre les différentes fonctionnalités de l'application.
+
+    Utilisation: python -m epic_events.cli menu
+    """
+    start_menu()
+
+
+# Commande pour exécuter les tests
+@cli.command()
+@click.option(
+    "--verbose", "-v", is_flag=True, help="Exécuter les tests en mode verbeux"
+)
+@click.option("--coverage", "-c", is_flag=True, help="Mesurer la couverture de code")
+@click.argument("test_path", required=False)
+def test(verbose, coverage, test_path):
+    """
+    Exécuter les tests avec pytest.
+
+    Cette commande lance les tests unitaires et fonctionnels du projet en utilisant pytest.
+    Vous pouvez spécifier un chemin de test spécifique pour exécuter seulement certains tests.
+
+    Exemples:
+        - Exécuter tous les tests: python -m epic_events.cli test
+        - Exécuter les tests en mode verbeux: python -m epic_events.cli test --verbose
+        - Exécuter avec couverture de code: python -m epic_events.cli test --coverage
+        - Exécuter un fichier de test spécifique: python -m epic_events.cli test tests/test_auth.py
+    """
+    os.environ["EPIC_EVENTS_ENV"] = "test"  # Configurer l'environnement de test
+
+    cmd = ["pytest"]
+
+    if verbose:
+        cmd.append("-v")
+
+    if coverage:
+        cmd.extend(["--cov=epic_events", "--cov-report=term-missing"])
+
+    if test_path:
+        cmd.append(test_path)
+
+    try:
+        # Exécuter pytest avec les options fournies
+        result = subprocess.run(" ".join(cmd), shell=True)
+        if result.returncode != 0:
+            click.echo(
+                f"Les tests ont échoué avec le code de retour: {result.returncode}"
+            )
+            sys.exit(result.returncode)
+    except Exception as e:
+        click.echo(f"Erreur lors de l'exécution des tests: {e}")
+        sys.exit(1)
 
 
 # Enregistrement des commandes des différents modules

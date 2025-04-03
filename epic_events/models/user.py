@@ -1,8 +1,8 @@
 """
 Modèle de données pour les utilisateurs.
 
-Ce module définit la structure et le comportement des utilisateurs dans l'application.
-Il gère les différents rôles (Commercial, Support, Gestion) et leurs permissions.
+Ce module définit la structure et le comportement des utilisateurs de l'application,
+notamment les rôles et les permissions.
 """
 
 from datetime import datetime
@@ -34,17 +34,16 @@ class UserRole:
     @classmethod
     def choices(cls):
         """
-        Retourne les choix possibles pour les rôles.
-
-        Cette méthode est utilisée pour générer les options dans les formulaires
-        ou les interfaces CLI qui nécessitent de choisir un rôle.
+        Retourne la liste des rôles disponibles.
 
         Returns:
-            list: Liste de tuples (valeur, libellé) pour chaque rôle
+            list: Liste des tuples (valeur, libellé) pour les rôles
         """
         return [
-            (role, role.capitalize())
-            for role in [cls.ADMIN, cls.COMMERCIAL, cls.SUPPORT, cls.GESTION]
+            (cls.ADMIN, "Administrateur"),
+            (cls.COMMERCIAL, "Commercial"),
+            (cls.SUPPORT, "Support"),
+            (cls.GESTION, "Gestion"),
         ]
 
 
@@ -105,20 +104,19 @@ class User(Base):
 
         Args:
             username (str): Nom d'utilisateur unique
-            email (str): Adresse email
-            password (str, optional): Mot de passe en clair (sera haché)
-            password_hash (str, optional): Hash de mot de passe pré-calculé
-            first_name (str, optional): Prénom
-            last_name (str, optional): Nom
-            role (str, optional): Rôle de l'utilisateur
+            email (str): Adresse email unique
+            password (str, optional): Mot de passe (sera haché). Defaults to None.
+            password_hash (str, optional): Hash du mot de passe. Defaults to None.
+            first_name (str, optional): Prénom. Defaults to None.
+            last_name (str, optional): Nom. Defaults to None.
+            role (str, optional): Rôle de l'utilisateur. Defaults to None.
         """
         self.username = username
         self.email = email
-        self.first_name = first_name
-        self.last_name = last_name
-        self.role = role
+        self.first_name = first_name or ""
+        self.last_name = last_name or ""
+        self.role = role or UserRole.COMMERCIAL
 
-        # Gestion du mot de passe
         if password:
             self.set_password(password)
         elif password_hash:
@@ -126,35 +124,40 @@ class User(Base):
 
     def set_password(self, password):
         """
-        Définit le mot de passe de l'utilisateur en le hashant.
+        Définit le mot de passe haché pour l'utilisateur.
 
-        Cette méthode prend un mot de passe en clair et stocke sa version
-        hashée dans la base de données pour une sécurité renforcée.
+        Cette méthode prend le mot de passe en clair et le transforme
+        en hash sécurisé avant de le stocker dans la base de données.
+        Le mot de passe original n'est jamais stocké.
 
         Args:
             password (str): Mot de passe en clair
         """
-        self.password_hash = generate_password_hash(password)
+        # Utiliser une méthode de hachage compatible avec toutes les versions
+        # La méthode 'pbkdf2:sha256' est compatible avec la plupart des versions d'OpenSSL
+        self.password_hash = generate_password_hash(password, method="pbkdf2:sha256")
 
     def check_password(self, password):
         """
         Vérifie si le mot de passe fourni correspond au hash stocké.
 
+        Cette méthode permet de vérifier si le mot de passe fourni
+        correspond au hash stocké dans la base de données, sans jamais
+        manipuler le mot de passe original.
+
         Args:
-            password (str): Mot de passe en clair à vérifier
+            password (str): Mot de passe à vérifier
 
         Returns:
             bool: True si le mot de passe est correct, False sinon
         """
-        if self.password_hash is None:
+        if not self.password_hash:
             return False
         return check_password_hash(self.password_hash, password)
 
     def has_role(self, role):
         """
         Vérifie si l'utilisateur a un rôle spécifique.
-
-        Cette méthode est utilisée pour vérifier les permissions.
 
         Args:
             role (str): Rôle à vérifier
@@ -184,7 +187,7 @@ class User(Base):
 
     def is_support(self):
         """
-        Vérifie si l'utilisateur est un support.
+        Vérifie si l'utilisateur est un membre du support.
 
         Returns:
             bool: True si l'utilisateur est support, False sinon
@@ -195,45 +198,51 @@ class User(Base):
         """
         Vérifie si l'utilisateur peut gérer un client spécifique.
 
-        Un utilisateur peut gérer un client s'il est:
+        Un utilisateur peut gérer un client s'il est :
+        - De l'équipe de gestion
         - Un administrateur
-        - Un membre de l'équipe de gestion
         - Le commercial assigné au client
 
         Args:
-            client: Instance du modèle Client
+            client (Client): Client à vérifier
 
         Returns:
-            bool: True si l'utilisateur peut gérer le client
+            bool: True si l'utilisateur peut gérer le client, False sinon
         """
-        return (
-            self.is_admin()
-            or self.has_role(UserRole.GESTION)
-            or (self.is_commercial() and client.commercial_id == self.id)
-        )
+        if self.is_admin() or self.has_role(UserRole.GESTION):
+            return True
+
+        if self.is_commercial():
+            return client.commercial_id == self.id
+
+        return False
 
     def can_manage_event(self, event):
         """
         Vérifie si l'utilisateur peut gérer un événement spécifique.
 
-        Un utilisateur peut gérer un événement s'il est:
+        Un utilisateur peut gérer un événement s'il est :
+        - De l'équipe de gestion
         - Un administrateur
-        - Un membre de l'équipe de gestion
+        - Le commercial associé au contrat de l'événement
         - Le support assigné à l'événement
-        - Le commercial responsable du client lié à l'événement
 
         Args:
-            event: Instance du modèle Event
+            event (Event): Événement à vérifier
 
         Returns:
-            bool: True si l'utilisateur peut gérer l'événement
+            bool: True si l'utilisateur peut gérer l'événement, False sinon
         """
-        return (
-            self.is_admin()
-            or self.has_role(UserRole.GESTION)
-            or (self.is_support() and event.support_id == self.id)
-            or (self.is_commercial() and event.contract.client.commercial_id == self.id)
-        )
+        if self.is_admin() or self.has_role(UserRole.GESTION):
+            return True
+
+        if self.is_commercial():
+            return event.contract.commercial_id == self.id
+
+        if self.is_support():
+            return event.support_id == self.id
+
+        return False
 
     @property
     def full_name(self):
@@ -243,48 +252,45 @@ class User(Base):
         Returns:
             str: Prénom et nom concaténés
         """
-        if self.first_name and self.last_name:
-            return f"{self.first_name} {self.last_name}"
-        return self.username
+        return f"{self.first_name} {self.last_name}"
 
     def __repr__(self):
         """
         Représentation textuelle de l'utilisateur.
 
-        Utile pour le debugging et les logs.
-
         Returns:
-            str: Représentation de l'utilisateur avec son nom et son rôle
+            str: Représentation de l'utilisateur avec son nom d'utilisateur et son rôle
         """
         return f"<User {self.username} ({self.role})>"
 
 
 def init_admin_user():
     """
-    Fonction utilitaire pour créer un utilisateur administrateur.
+    Crée un utilisateur administrateur si aucun n'existe.
 
     Cette fonction est utilisée lors de l'initialisation de l'application
-    pour garantir qu'un utilisateur admin est toujours disponible.
+    pour s'assurer qu'il y a toujours au moins un utilisateur administrateur
+    qui peut gérer le système.
     """
     from sqlalchemy.orm import Session
     from ..database import engine
 
     session = Session(engine)
-
-    # Vérifier si un administrateur existe déjà
-    admin = session.query(User).filter_by(role=UserRole.ADMIN).first()
-    if not admin:
-        # Créer l'utilisateur admin
-        admin = User(
-            username="admin",
-            email="admin@epic-events.fr",
-            first_name="Admin",
-            last_name="System",
-            role=UserRole.ADMIN,
-        )
-        admin.set_password("admin123")
-
-        session.add(admin)
-        session.commit()
-
-    session.close()
+    try:
+        # Vérifier si un admin existe déjà
+        admin = session.query(User).filter_by(role=UserRole.ADMIN).first()
+        if not admin:
+            # Créer un nouvel administrateur
+            admin = User(
+                username="admin",
+                email="admin@epic-events.com",
+                first_name="Admin",
+                last_name="System",
+                role=UserRole.ADMIN,
+            )
+            admin.set_password("admin123")
+            session.add(admin)
+            session.commit()
+            print("Admin user created.")
+    finally:
+        session.close()

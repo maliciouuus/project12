@@ -4,22 +4,25 @@ Application de gestion CRM pour l'entreprise Epic Events, spécialisée dans l'o
 
 ## Description
 
-Epic Events CRM est une application en ligne de commande (CLI) qui permet la gestion complète des clients, contrats et événements pour une entreprise d'organisation d'événements. Elle prend en charge différents rôles utilisateurs (administrateur, commercial, support, gestion) avec des permissions spécifiques.
+Epic Events CRM est une application complète qui permet la gestion des clients, contrats et événements pour une entreprise d'organisation d'événements. Elle propose une interface en ligne de commande (CLI) ainsi qu'une interface interactive sous forme de menu. L'application prend en charge différents rôles utilisateurs (administrateur, commercial, support, gestion) avec des permissions spécifiques.
 
 ## Fonctionnalités
 
+- **Interface interactive** : Menu convivial pour naviguer facilement entre les fonctionnalités
 - **Gestion des utilisateurs** : Création, modification, suppression et liste des utilisateurs avec différents rôles
 - **Gestion des clients** : Suivi des informations clients et association avec un commercial
 - **Gestion des contrats** : Suivi des contrats, avec statut (signé, payé) et montants
 - **Gestion des événements** : Organisation des prestations avec dates, lieux et assignation à l'équipe support
+- **Authentification** : Système de connexion sécurisé avec gestion des sessions
+- **Autorisations** : Contrôle d'accès basé sur les rôles et les permissions spécifiques
 - **Journalisation** : Intégration avec Sentry pour le suivi des actions utilisateurs, signatures de contrats et erreurs
-- **Sécurité** : Hachage des mots de passe et gestion des permissions par rôle
+- **Sécurité** : Hachage des mots de passe et gestion fine des permissions
 
 ## Prérequis
 
 - Python 3.8 ou supérieur
 - pip (gestionnaire de paquets Python)
-- Bash (pour les scripts d'installation et de test)
+- Bash (pour le script d'installation)
 
 ## Installation
 
@@ -37,28 +40,48 @@ Ce script va :
 3. Initialiser la base de données
 4. Créer un utilisateur administrateur par défaut
 
-Pour configurer Sentry, vous devez manuellement configurer le fichier `.env` :
+Pour configurer Sentry, vous devez configurer le fichier `.env` :
 1. Si le fichier n'existe pas, copiez `.env.example` en `.env`
 2. Modifiez la variable `SENTRY_DSN` avec votre DSN Sentry
 
 ## Utilisation
 
-Après installation, vous pouvez utiliser l'application via sa CLI :
+### Menu Interactif (Recommandé)
+
+Pour lancer l'interface interactive :
 
 ```bash
-# Avec l'environnement virtuel activé
+./setup.sh
+```
+
+Et sélectionnez l'option "2) Lancer le menu interactif".
+
+Ou directement avec la commande :
+
+```bash
+python -m epic_events.cli menu
+```
+
+### Interface en Ligne de Commande
+
+Vous pouvez également utiliser l'application via sa CLI traditionnelle :
+
+```bash
 python -m epic_events.cli [COMMANDE]
 ```
 
-### Commandes principales
+#### Commandes principales
 
 - `user` : Gestion des utilisateurs
 - `client` : Gestion des clients
 - `contract` : Gestion des contrats
 - `event` : Gestion des événements
 - `seed` : Génération de données de test
+- `menu` : Lancer l'interface interactive
+- `init` : Initialiser la base de données
+- `test` : Exécuter les tests
 
-### Exemples d'utilisation
+#### Exemples d'utilisation CLI
 
 ```bash
 # Créer un utilisateur
@@ -80,8 +103,10 @@ python -m epic_events.cli event list --support-id 2
 epic_events/
 ├── __init__.py        # Initialisation du package
 ├── cli.py             # Point d'entrée de la CLI
+├── auth.py            # Système d'authentification
 ├── database.py        # Configuration de la base de données
 ├── event_logging.py   # Intégration avec Sentry
+├── menu.py            # Interface utilisateur interactive
 ├── commands/          # Commandes CLI
 │   ├── __init__.py
 │   ├── client_commands.py
@@ -99,32 +124,33 @@ epic_events/
 
 ## Tests
 
-Pour exécuter les tests automatisés :
+Le projet comprend une suite complète de tests unitaires et d'intégration couvrant :
+- Modèles de données
+- Authentification
+- Menu interactif
+- Flux de travail complets
+
+Pour exécuter les tests :
 
 ```bash
-./test_epic_events.sh
+./setup.sh
 ```
 
-Ce script va :
-1. Nettoyer l'environnement de test
-2. Initialiser une base de données de test
-3. Tester les fonctionnalités de base (utilisateurs, clients, contrats, événements)
-4. Générer un rapport des tests
+Et sélectionnez l'option "3) Exécuter les tests (pytest)".
 
-Par défaut, Sentry est activé pendant les tests mais ses messages ne sont pas affichés dans le terminal. Vous pouvez modifier ce comportement avec les options suivantes :
+Ce processus vous offre plusieurs options :
+- Exécuter tous les tests
+- Exécuter les tests avec affichage détaillé
+- Exécuter les tests avec rapport de couverture
+- Exécuter un fichier de test spécifique
+
+Par défaut, Sentry est activé pendant les tests mais ses messages ne sont pas affichés dans le terminal. Vous pouvez configurer le comportement de Sentry dans le fichier `.env` :
 
 ```bash
-# Pour désactiver complètement Sentry pendant les tests
-./test_epic_events.sh --disable-sentry
-
-# Pour afficher les messages Sentry dans le terminal
-./test_epic_events.sh --show-sentry
-
-# Pour afficher l'aide et les options disponibles
-./test_epic_events.sh --help
+# Modifier les variables dans .env
+# SENTRY_ENABLED=false  # Pour désactiver complètement Sentry
+# SENTRY_DEBUG=true     # Pour afficher les messages Sentry dans le terminal
 ```
-
-Les événements sont automatiquement enregistrés dans votre tableau de bord Sentry lorsque Sentry est activé.
 
 ## Configuration de Sentry
 
@@ -135,42 +161,61 @@ Pour la journalisation avec Sentry :
    cp .env.example .env
    ```
 2. Modifiez la variable `SENTRY_DSN` dans le fichier `.env` avec votre DSN Sentry
-3. Configurez `SENTRY_SEND_PII` selon vos besoins de confidentialité
+3. Configurez les options supplémentaires selon vos besoins :
+   ```
+   SENTRY_ENABLED=true       # Activer/désactiver Sentry
+   SENTRY_DEBUG=false        # Afficher les messages de debug Sentry
+   SENTRY_SEND_PII=false     # Envoyer les informations personnelles identifiables
+   ENVIRONMENT=development   # Environnement (development, test, production)
+   ```
 
-Pour vérifier que Sentry fonctionne correctement, lancez une commande qui effectue une action journalisée, par exemple:
-
-```bash
-python -m epic_events.cli user create --username "test_user" --email "test@example.com" --password "password123" --first-name "Test" --last-name "User" --role "commercial"
-```
-
-Vous devriez voir les événements correspondants dans votre dashboard Sentry.
+Pour vérifier que Sentry fonctionne correctement, lancez une commande qui effectue une action journalisée, ou connectez-vous via le menu interactif.
 
 ## Maintenance
 
-Pour gérer l'installation ou nettoyer l'environnement :
+Le script `setup.sh` offre plusieurs options pour gérer l'application :
 
 ```bash
 ./setup.sh
 ```
 
-Et sélectionnez l'option appropriée :
-- "1) Installer l'application" : Installe l'environnement, les dépendances et initialise la base de données
-- "2) Nettoyer l'installation" : Supprime l'environnement virtuel, la base de données, les fichiers cache et les fichiers .pyc (avec option de conserver le fichier .env)
-- "3) Générer un rapport HTML avec flake8" : Crée un rapport HTML détaillé des problèmes de style de code
+Options disponibles :
+- "1) Installer l'application" : Installation complète avec initialisation
+- "2) Lancer le menu interactif" : Démarrer l'interface utilisateur
+- "3) Exécuter les tests (pytest)" : Lancer la suite de tests
+- "4) Générer un rapport HTML avec flake8" : Analyser la qualité du code
+- "5) Nettoyer l'installation" : Supprimer l'environnement et les fichiers générés
+- "6) Quitter" : Sortir du script
 
 ### Rapport de qualité de code
 
 L'application intègre des outils de qualité de code :
 
-1. **Black** : Formateur de code automatique qui assure une mise en forme cohérente
-2. **Flake8** : Linter qui vérifie le respect des conventions PEP 8 et identifie les problèmes potentiels
-3. **Rapport HTML** : Visualisation interactive des problèmes de style de code
+1. **Black** : Formateur de code automatique
+2. **Flake8** : Linter pour les conventions PEP 8
+3. **Rapport HTML** : Visualisation des problèmes de style de code
 
-Pour générer un rapport HTML détaillé :
+Pour générer un rapport HTML :
 ```bash
 ./setup.sh
 ```
-Puis sélectionnez l'option "3) Générer un rapport HTML avec flake8". Le rapport sera disponible dans le dossier `reports/html/` et peut être consulté dans n'importe quel navigateur web.
+Puis sélectionnez l'option "4) Générer un rapport HTML avec flake8".
+
+## Authentification et Sécurité
+
+### Utilisateur par défaut
+Après l'installation, vous pouvez vous connecter avec l'utilisateur administrateur par défaut :
+- Nom d'utilisateur : `admin`
+- Mot de passe : `admin123`
+
+Il est recommandé de changer ce mot de passe dès la première utilisation en production.
+
+### Rôles utilisateurs
+Le système gère quatre rôles distincts :
+- **Admin** : Accès complet à toutes les fonctionnalités
+- **Commercial** : Gestion des clients et contrats associés
+- **Support** : Gestion des événements assignés
+- **Gestion** : Supervision globale sans droits d'administration
 
 ## Auteur
 
