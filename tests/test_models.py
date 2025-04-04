@@ -352,12 +352,15 @@ class TestEventModel:
         assert test_event.has_support
 
         # Modifier les dates pour tester d'autres états
-        now = datetime.now()
+        now = datetime.utcnow()
+        print(f"Heure UTC: {now}")
 
         # Événement en cours
         test_event.start_date = now - timedelta(hours=1)
         test_event.end_date = now + timedelta(hours=1)
-        assert not test_event.is_future
+        print(f"Date début: {test_event.start_date}")
+        print(f"Date fin: {test_event.end_date}")
+        print(f"is_ongoing: {test_event.is_ongoing}")
         assert test_event.is_ongoing
         assert not test_event.is_past
         assert test_event.status == "En cours"

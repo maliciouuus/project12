@@ -104,7 +104,8 @@ def user_menu():
             click.echo("Laissez vide si pas de changement")
             username = click.prompt("Nouveau nom", default="", show_default=False)
             email = click.prompt("Nouvel email", default="", show_default=False)
-            password = click.prompt("Nouveau mot de passe", default="", show_default=False, hide_input=True)
+            texte_first = "Nouveau mot de passe"
+            password = click.prompt(texte_first, default="", show_default=False, hide_input=True)
             first_name = click.prompt("Nouveau prénom", default="", show_default=False)
             last_name = click.prompt("Nouveau nom", default="", show_default=False)
 
